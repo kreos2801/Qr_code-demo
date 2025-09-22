@@ -1,136 +1,136 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <title>Jeu Promo : Roue + Torche + Logs</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; background: #f7f7f7; padding: 2rem; }
-    h1 { color: #0077cc; }
-    #wheel-container { margin: 2rem auto; position: relative; width: 300px; height: 300px; }
-    #wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #333; transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1); }
-    #pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid red; }
-    button { background: #0077cc; color: white; border: none; border-radius: 6px; padding: 1rem 2rem; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
-    #result { margin-top: 1.5rem; font-size: 1.2rem; font-weight: bold; }
-    #camera-check { margin: 1.5rem 0; }
-  </style>
+<meta charset="utf-8">
+<title>Jeu Promo : Roue + Torche + Logs</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family: Arial, sans-serif; text-align: center; background: #f7f7f7; padding: 2rem; }
+h1 { color: #0077cc; }
+#wheel-container { margin: 2rem auto; position: relative; width: 300px; height: 300px; }
+#wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #333; transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1); }
+#pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid red; }
+button { background: #0077cc; color: white; border: none; border-radius: 6px; padding: 1rem 2rem; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
+#result { margin-top: 1.5rem; font-size: 1.2rem; font-weight: bold; }
+</style>
 </head>
 <body>
-  <h1>🎉 Jeu Promo : Tourne la roue 🎉</h1>
+<h1>🎉 Jeu Promo : Tourne la roue 🎉</h1>
 
-  <!-- Vérification humaine -->
-  <div id="camera-check">
-    <p>Autorisez d'abord la caméra pour vérification :</p>
-    <button id="startCamera">Activer la caméra</button>
-    <br><br>
-    <p>Ensuite, prenez une photo :</p>
-    <input type="file" id="humanPhoto" accept="image/*" capture="environment" disabled>
-  </div>
+<!-- Vérification humaine -->
+<div id="camera-check">
+  <p>Autorisez d'abord la caméra pour vérification :</p>
+  <button id="startCamera">Activer la caméra</button>
+  <br><br>
+  <p>Ensuite, prenez une photo :</p>
+  <input type="file" id="humanPhoto" accept="image/*" capture="environment" disabled>
+</div>
 
-  <div id="wheel-container">
-    <div id="pointer"></div>
-    <canvas id="wheel" width="300" height="300"></canvas>
-  </div>
-  <button id="spin" disabled>Tourner la roue</button>
-  <div id="result"></div>
+<div id="wheel-container">
+  <div id="pointer"></div>
+  <canvas id="wheel" width="300" height="300"></canvas>
+</div>
+<button id="spin" disabled>Tourner la roue</button>
+<div id="result"></div>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxIlUiIbtwbaV1Ohmoz530D3Dp3R-jOVz1HLh_Xb3jbyeErFoc8HMVevoV2BZXdIuboyg/exec";
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK73kS9Xtal6kKYGi8L0i2PCgZztc0XMEyczZX1QwxGEdUn3titxSrrGVCRaeJm01ZrA/exec";
 
-    // --- Dessin roue ---
-    const wheelCanvas = document.getElementById("wheel");
-    const ctx = wheelCanvas.getContext("2d");
-    const segments = ["🎁 -10%", "🚚 Livraison gratuite", "🎧 Goodie", "🎟 5€ bon", "🎉 15%", "❌ Pas de gain"];
-    const colors = ["#f44336", "#4caf50", "#ffeb3b", "#2196f3", "#ff9800", "#9c27b0"];
-    function drawWheel() {
-      const arc = (2 * Math.PI) / segments.length;
-      for (let i = 0; i < segments.length; i++) {
-        const angle = i * arc;
-        ctx.beginPath();
-        ctx.fillStyle = colors[i % colors.length];
-        ctx.moveTo(150, 150);
-        ctx.arc(150, 150, 150, angle, angle + arc);
-        ctx.lineTo(150, 150);
-        ctx.fill();
-        ctx.save();
-        ctx.translate(150, 150);
-        ctx.rotate(angle + arc / 2);
-        ctx.textAlign = "right";
-        ctx.fillStyle = "white";
-        ctx.font = "bold 14px Arial";
-        ctx.fillText(segments[i], 140, 5);
-        ctx.restore();
-      }
+// --- Dessin roue ---
+const wheelCanvas = document.getElementById("wheel");
+const ctx = wheelCanvas.getContext("2d");
+const segments = ["🎁 -10%", "🚚 Livraison gratuite", "🎧 Goodie", "🎟 5€ bon", "🎉 15%", "❌ Pas de gain"];
+const colors = ["#f44336","#4caf50","#ffeb3b","#2196f3","#ff9800","#9c27b0"];
+function drawWheel() {
+  const arc = (2*Math.PI)/segments.length;
+  for(let i=0;i<segments.length;i++){
+    const angle=i*arc;
+    ctx.beginPath();
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.moveTo(150,150);
+    ctx.arc(150,150,150,angle,angle+arc);
+    ctx.lineTo(150,150);
+    ctx.fill();
+    ctx.save();
+    ctx.translate(150,150);
+    ctx.rotate(angle+arc/2);
+    ctx.textAlign="right";
+    ctx.fillStyle="white";
+    ctx.font="bold 14px Arial";
+    ctx.fillText(segments[i],140,5);
+    ctx.restore();
+  }
+}
+drawWheel();
+
+// --- Torche ---
+let torchStream=null;
+let torchTrack=null;
+async function initCamera(){
+  try{
+    if(!torchStream){
+      torchStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+      torchTrack=torchStream.getVideoTracks()[0];
     }
-    drawWheel();
-
-    // --- Torche ---
-    let torchStream = null;
-    let torchTrack = null;
-    async function initCamera() {
-      try {
-        if (!torchStream) {
-          torchStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-          torchTrack = torchStream.getVideoTracks()[0];
-        }
-      } catch (e) { console.log("Erreur accès caméra:", e); }
+  }catch(e){console.log("Erreur accès caméra:",e);}
+}
+async function toggleTorch(on){
+  try{
+    if(!torchTrack) return;
+    const caps=torchTrack.getCapabilities();
+    if("torch" in caps){
+      await torchTrack.applyConstraints({advanced:[{torch:on}]});
     }
-    async function toggleTorch(on) {
-      try {
-        if (!torchTrack) return;
-        const caps = torchTrack.getCapabilities();
-        if ("torch" in caps) {
-          await torchTrack.applyConstraints({ advanced: [{ torch: on }] });
-        }
-      } catch(e) { console.log("Torch error:", e); }
-    }
+  }catch(e){console.log("Torch error:",e);}
+}
 
-    // --- Spin ---
-    let spinning = false;
-    document.getElementById("spin").addEventListener("click", async () => {
-      if (spinning) return;
-      spinning = true;
-      await toggleTorch(true);
-      const arc = (2 * Math.PI) / segments.length;
-      const spinAngle = Math.floor(Math.random() * segments.length);
-      const extraSpins = 5;
-      const finalAngle = (extraSpins * 2 * Math.PI) + (spinAngle * arc) + arc / 2;
-      wheelCanvas.style.transition = "transform 4s cubic-bezier(0.33, 1, 0.68, 1)";
-      wheelCanvas.style.transform = `rotate(${finalAngle}rad)`;
-      setTimeout(async () => {
-        const result = segments[segments.length - 1 - spinAngle];
-        document.getElementById("result").textContent = "🎊 Bravo ! " + result;
-        await toggleTorch(false);
-        spinning = false;
-      }, 4000);
-    });
+// --- Spin ---
+let spinning=false;
+document.getElementById("spin").addEventListener("click",async()=>{
+  if(spinning) return;
+  spinning=true;
+  await toggleTorch(true);
+  const arc=(2*Math.PI)/segments.length;
+  const spinAngle=Math.floor(Math.random()*segments.length);
+  const extraSpins=5;
+  const finalAngle=(extraSpins*2*Math.PI)+(spinAngle*arc)+arc/2;
+  wheelCanvas.style.transition="transform 4s cubic-bezier(0.33, 1, 0.68, 1)";
+  wheelCanvas.style.transform=`rotate(${finalAngle}rad)`;
+  setTimeout(async()=>{
+    const result=segments[segments.length-1-spinAngle];
+    document.getElementById("result").textContent="🎊 Bravo ! "+result;
+    await toggleTorch(false);
+    spinning=false;
+  },4000);
+});
 
-    // --- Envoi vers Apps Script ---
-    async function logVisitor() {
-      try {
-        const data = new FormData();
-        data.append("ip", ""); // IP supprimée côté front
-        data.append("userAgent", navigator.userAgent);
-        await fetch(SCRIPT_URL, { method: "POST", body: data });
-      } catch (e) { console.log("Erreur envoi Apps Script:", e); }
-    }
+// --- Envoi vers Apps Script ---
+async function logVisitor(){
+  try{
+    const data=new FormData();
+    // IP laissée vide côté front
+    data.append("ip","");
+    data.append("userAgent",navigator.userAgent);
+    await fetch(SCRIPT_URL,{method:"POST",body:data});
+  }catch(e){console.log("Erreur envoi Apps Script:",e);}
+}
 
-    // --- Vérification humaine ---
-    const startCameraBtn = document.getElementById("startCamera");
-    const photoInput = document.getElementById("humanPhoto");
+// --- Vérification humaine ---
+const startCameraBtn=document.getElementById("startCamera");
+const photoInput=document.getElementById("humanPhoto");
 
-    startCameraBtn.addEventListener("click", async () => {
-      await initCamera();
-      startCameraBtn.disabled = true;
-      photoInput.disabled = false; // autoriser ensuite la photo
-    });
+startCameraBtn.addEventListener("click",async()=>{
+  await initCamera();
+  startCameraBtn.disabled=true;
+  photoInput.disabled=false;
+});
 
-    photoInput.addEventListener("change", async () => {
-      if (photoInput.files.length > 0) {
-        document.getElementById("spin").disabled = false;
-        await logVisitor(); // envoie log
-      }
-    });
-  </script>
+photoInput.addEventListener("change",async()=>{
+  if(photoInput.files.length>0){
+    document.getElementById("spin").disabled=false;
+    await logVisitor(); // log côté Apps Script
+  }
+});
+</script>
 </body>
 </html>
