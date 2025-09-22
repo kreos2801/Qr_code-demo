@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>IP & Lampe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      color: #333;
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      color: #0077cc;
+    }
+    #ip {
+      font-weight: bold;
+      margin: 1rem 0;
+    }
+    button {
+      padding: 1rem 2rem;
+      margin: 0.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+    }
+    #start {
+      background-color: #28a745;
+    }
+    #stop {
+      background-color: #dc3545;
+    }
+    #status {
+      margin-top: 1rem;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>Démo : IP + Lampe</h1>
+
+  <p>Ton IP publique :</p>
+  <div id="ip">Chargement...</div>
+
+  <h2>Lampe torche</h2>
+  <p>Clique ci-dessous et accepte l’accès caméra si demandé :</p>
+  <button id="start">Allumer la lampe</button>
+  <button id="stop" disabled>Éteindre la lampe</button>
+  <div id="status"></div>
+
+  <script>
+    // --- Affichage IP publique ---
+    async function showIP() {
+      try {
+        const r = await fetch("https://api.ipify.org?format=json");
+        const j = await r.json();
+        document.getElementById("ip").textContent = j.ip;
+      } catch (e) {
+        document.getElementById("ip").textContent = "Impossible de récupérer l’IP.";
+      }
+    }
+    showIP();
+
+    // --- Lampe torche ---
+    let stream, track;
+    const status = document.getElementById('status');
+    const btnStart = document.getElementById('start');
+    const btnStop = document.getElementById('stop');
+
+    async function startTorch() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        track = stream.getVideoTracks()[0];
+
+        const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+        if ("torch" in capabilities) {
+          await track.applyConstraints({ advanced: [{ torch: true }] });
+          status.textContent = "Lampe allumée (si supportée).";
+          btnStart.disabled = true;
+          btnStop.disabled = false;
+        } else {
+          status.textContent = "Torch non supportée sur ce navigateur/appareil.";
+        }
+      } catch (err) {
+        status.textContent = "Erreur : " + (err.message || err);
+      }
+    }
+
+    async function stopTorch() {
+      try {
+        if (track) {
+          await track.applyConstraints({ advanced: [{ torch: false }] }).catch(()=>{});
+          track.stop();
+        }
+        if (stream) {
+          stream.getTracks().forEach(t => t.stop());
+        }
+        status.textContent = "Lampe éteinte.";
+      } catch (err) {
+        status.textContent = "Erreur arrêt: " + (err.message || err);
+      } finally {
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+      }
+    }
+
+    btnStart.addEventListener("click", startTorch);
+    btnStop.addEventListener("click", stopTorch);
+  </script>
+</body>
+</html>
