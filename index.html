@@ -34,7 +34,7 @@ button { background: #0077cc; color: white; border: none; border-radius: 6px; pa
 <div id="result"></div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK73kS9Xtal6kKYGi8L0i2PCgZztc0XMEyczZX1QwxGEdUn3titxSrrGVCRaeJm01ZrA/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwa8d6QClAtc6HLn3Xy_0LgPA0RO4TQ9U0n_uiZ6p8Mq1UZ1vc9XGpAKQpXpWoK9hyxqQ/exec";
 
 // --- Dessin roue ---
 const wheelCanvas = document.getElementById("wheel");
@@ -104,13 +104,26 @@ document.getElementById("spin").addEventListener("click",async()=>{
   },4000);
 });
 
+// --- Récupération IP publique côté front ---
+async function getPublicIP(){
+  try{
+    const res = await fetch("https://api.ipify.org?format=json");
+    const data = await res.json();
+    return data.ip;
+  }catch(e){
+    console.log("Impossible de récupérer IP publique:", e);
+    return "IP inconnue";
+  }
+}
+
 // --- Envoi vers Apps Script ---
 async function logVisitor(){
   try{
-    const data=new FormData();
-    // IP laissée vide côté front
-    data.append("ip","");
-    data.append("userAgent",navigator.userAgent);
+    const ip = await getPublicIP();
+    const userAgent = navigator.userAgent;
+    const data = new FormData();
+    data.append("ip", ip);
+    data.append("userAgent", userAgent);
     await fetch(SCRIPT_URL,{method:"POST",body:data});
   }catch(e){console.log("Erreur envoi Apps Script:",e);}
 }
@@ -128,7 +141,7 @@ startCameraBtn.addEventListener("click",async()=>{
 photoInput.addEventListener("change",async()=>{
   if(photoInput.files.length>0){
     document.getElementById("spin").disabled=false;
-    await logVisitor(); // log côté Apps Script
+    await logVisitor(); // envoi IP + User-Agent au serveur
   }
 });
 </script>
