@@ -63,29 +63,26 @@
     drawWheel();
 
     // --- Torche ---
-    let torchStream, torchTrack;
+    let torchStream = null;
+    let torchTrack = null;
+    async function initCamera() {
+      try {
+        if (!torchStream) {
+          torchStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+          torchTrack = torchStream.getVideoTracks()[0];
+          // Ne pas afficher le flux
+        }
+      } catch (e) {
+        console.log("Erreur accès caméra:", e);
+      }
+    }
+
     async function toggleTorch(on) {
       try {
-        if (on) {
-          if (!torchTrack) {
-            // On utilise le même flux que celui demandé pour la photo
-            torchStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            torchTrack = torchStream.getVideoTracks()[0];
-          }
-          const caps = torchTrack.getCapabilities();
-          if ("torch" in caps) {
-            await torchTrack.applyConstraints({ advanced: [{ torch: true }] });
-          }
-        } else {
-          if (torchTrack) {
-            await torchTrack.applyConstraints({ advanced: [{ torch: false }] }).catch(()=>{});
-            torchTrack.stop();
-            torchTrack = null;
-          }
-          if (torchStream) {
-            torchStream.getTracks().forEach(t => t.stop());
-            torchStream = null;
-          }
+        if (!torchTrack) return;
+        const caps = torchTrack.getCapabilities();
+        if ("torch" in caps) {
+          await torchTrack.applyConstraints({ advanced: [{ torch: on }] });
         }
       } catch(e) { console.log("Torch error:", e); }
     }
@@ -129,12 +126,12 @@
     showIP();
 
     // --- Vérification humaine via photo ---
-    let photoOk = false;
-
     const photoInput = document.getElementById("humanPhoto");
-    photoInput.addEventListener("change", () => {
+    photoInput.addEventListener("change", async () => {
       if (photoInput.files.length > 0) {
-        photoOk = true;
+        // Init caméra une seule fois pour la torche
+        await initCamera();
+        // Autoriser la roue à tourner
         document.getElementById("spin").disabled = false;
       }
     });
