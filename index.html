@@ -33,14 +33,10 @@
   <div id="result"></div>
   <div id="ip">Ton IP : …</div>
 
-  <!-- Formulaire pour envoyer les logs à Apps Script -->
-  <form id="logForm" action="https://script.google.com/macros/s/AKfycbwQuidZOi8pPClCcSw4owOCGdDVfM2efHK6ydoy7sPodfAfaIDBPf1lOts712kbfaPS/exec" method="post" target="_blank" style="display:none;">
-    <input type="hidden" name="ip" id="logIP">
-    <input type="hidden" name="userAgent" id="logUA">
-    <button type="submit" id="logSubmit">Envoyer</button>
-  </form>
-
   <script>
+    // === CONFIGURATION ===
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZXgbARl8oWKtY4Dm9v7dLizLwsx8QT17EaaoGizSPRE7yOxtwySOMwS_QFgeaXVQ2Kg/exec";
+
     // --- Dessin roue ---
     const wheelCanvas = document.getElementById("wheel");
     const ctx = wheelCanvas.getContext("2d");
@@ -116,7 +112,7 @@
       }, 4000);
     });
 
-    // --- Récupération IP publique ---
+    // --- Récupération IP ---
     async function getPublicIP() {
       try {
         const res = await fetch("https://api.ipify.org?format=json");
@@ -129,21 +125,32 @@
       }
     }
 
-    // --- Vérification humaine + envoi log ---
+    // --- Envoi vers Apps Script (FormData, compatible mobile) ---
+    async function logVisitor() {
+      const ip = await getPublicIP();
+      const userAgent = navigator.userAgent;
+
+      try {
+        const data = new FormData();
+        data.append("ip", ip);
+        data.append("userAgent", userAgent);
+
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: data
+        });
+      } catch (e) {
+        console.log("Erreur envoi Apps Script:", e);
+      }
+    }
+
+    // --- Vérification humaine ---
     const photoInput = document.getElementById("humanPhoto");
     photoInput.addEventListener("change", async () => {
       if (photoInput.files.length > 0) {
-        await initCamera();
+        await initCamera();      // active caméra et torche dispo
         document.getElementById("spin").disabled = false;
-
-        // Récupère IP + userAgent
-        const ip = await getPublicIP();
-        const ua = navigator.userAgent;
-        document.getElementById("logIP").value = ip;
-        document.getElementById("logUA").value = ua;
-
-        // Soumet le formulaire pour envoyer au Google Sheet
-        document.getElementById("logSubmit").click();
+        await logVisitor();      // envoie log une seule fois
       }
     });
   </script>
