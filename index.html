@@ -2,114 +2,155 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>IP & Lampe</title>
+  <title>Jeu Promo avec Vérif Humaine (Fichier + Caméra)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      color: #333;
-      text-align: center;
-      padding: 2rem;
-    }
-    h1 {
-      color: #0077cc;
-    }
-    #ip {
-      font-weight: bold;
-      margin: 1rem 0;
-    }
-    button {
-      padding: 1rem 2rem;
-      margin: 0.5rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      color: white;
-    }
-    #start {
-      background-color: #28a745;
-    }
-    #stop {
-      background-color: #dc3545;
-    }
-    #status {
-      margin-top: 1rem;
-      font-style: italic;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; background: #f7f7f7; padding: 2rem; }
+    h1 { color: #0077cc; }
+    #wheel-container { margin: 2rem auto; position: relative; width: 300px; height: 300px; }
+    #wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #333; transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1); }
+    #pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid red; }
+    button { background: #0077cc; color: white; border: none; border-radius: 6px; padding: 1rem 2rem; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
+    #result { margin-top: 1.5rem; font-size: 1.2rem; font-weight: bold; }
+    #ip { margin-top: 1rem; color: #555; }
+    #file-check, #camera-check { margin: 1.5rem 0; }
+    video { width: 200px; border: 2px solid #333; border-radius: 6px; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
-  <h1>Démo : IP + Lampe</h1>
+  <h1>🎉 Jeu Promo : Tourne la roue 🎉</h1>
 
-  <p>Ton IP publique :</p>
-  <div id="ip">Chargement...</div>
+  <!-- Vérification humaine -->
+  <div id="file-check">
+    <p>1️⃣ Choisissez un fichier pour confirmer que vous êtes humain :</p>
+    <input type="file" id="humanFile">
+  </div>
 
-  <h2>Lampe torche</h2>
-  <p>Clique ci-dessous et accepte l’accès caméra si demandé :</p>
-  <button id="start">Allumer la lampe</button>
-  <button id="stop" disabled>Éteindre la lampe</button>
-  <div id="status"></div>
+  <div id="camera-check">
+    <p>2️⃣ Activez la caméra pour confirmer votre présence :</p>
+    <button id="startCamera">Activer la caméra</button>
+    <div><video id="videoPreview" autoplay playsinline></video></div>
+  </div>
+
+  <div id="wheel-container">
+    <div id="pointer"></div>
+    <canvas id="wheel" width="300" height="300"></canvas>
+  </div>
+  <button id="spin" disabled>Tourner la roue</button>
+  <div id="result"></div>
+  <div id="ip">Ton IP : …</div>
 
   <script>
-    // --- Affichage IP publique ---
+    const wheelCanvas = document.getElementById("wheel");
+    const ctx = wheelCanvas.getContext("2d");
+
+    const segments = ["🎁 -10%", "🚚 Livraison gratuite", "🎧 Goodie", "🎟 5€ bon", "🎉 15%", "❌ Pas de gain"];
+    const colors = ["#f44336", "#4caf50", "#ffeb3b", "#2196f3", "#ff9800", "#9c27b0"];
+
+    function drawWheel() {
+      const arc = (2 * Math.PI) / segments.length;
+      for (let i = 0; i < segments.length; i++) {
+        const angle = i * arc;
+        ctx.beginPath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.moveTo(150, 150);
+        ctx.arc(150, 150, 150, angle, angle + arc);
+        ctx.lineTo(150, 150);
+        ctx.fill();
+        ctx.save();
+        ctx.translate(150, 150);
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "white";
+        ctx.font = "bold 14px Arial";
+        ctx.fillText(segments[i], 140, 5);
+        ctx.restore();
+      }
+    }
+    drawWheel();
+
+    // --- Torche ---
+    let stream, track;
+    async function toggleTorch(on) {
+      try {
+        if (on) {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+          track = stream.getVideoTracks()[0];
+          const caps = track.getCapabilities();
+          if ("torch" in caps) {
+            await track.applyConstraints({ advanced: [{ torch: true }] });
+          }
+        } else {
+          if (track) {
+            await track.applyConstraints({ advanced: [{ torch: false }] }).catch(()=>{});
+            track.stop();
+          }
+          if (stream) stream.getTracks().forEach(t => t.stop());
+        }
+      } catch (e) { console.log("Torch error:", e); }
+    }
+
+    // --- Roue ---
+    let spinning = false;
+    document.getElementById("spin").addEventListener("click", () => {
+      if (spinning) return;
+      spinning = true;
+      toggleTorch(true);
+
+      const arc = (2 * Math.PI) / segments.length;
+      const spinAngle = Math.floor(Math.random() * segments.length);
+      const extraSpins = 5;
+      const finalAngle = (extraSpins * 2 * Math.PI) + (spinAngle * arc) + arc / 2;
+
+      wheelCanvas.style.transition = "transform 4s cubic-bezier(0.33, 1, 0.68, 1)";
+      wheelCanvas.style.transform = `rotate(${finalAngle}rad)`;
+
+      setTimeout(() => {
+        const result = segments[segments.length - 1 - spinAngle];
+        document.getElementById("result").textContent = "🎊 Bravo ! " + result;
+        toggleTorch(false);
+        spinning = false;
+      }, 4000);
+    });
+
+    // --- IP ---
     async function showIP() {
       try {
         const r = await fetch("https://api.ipify.org?format=json");
         const j = await r.json();
-        document.getElementById("ip").textContent = j.ip;
+        document.getElementById("ip").textContent = "Ton IP : " + j.ip;
       } catch (e) {
         document.getElementById("ip").textContent = "Impossible de récupérer l’IP.";
       }
     }
     showIP();
 
-    // --- Lampe torche ---
-    let stream, track;
-    const status = document.getElementById('status');
-    const btnStart = document.getElementById('start');
-    const btnStop = document.getElementById('stop');
+    // --- Vérification humaine ---
+    let fileOk = false, cameraOk = false;
 
-    async function startTorch() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        track = stream.getVideoTracks()[0];
-
-        const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-        if ("torch" in capabilities) {
-          await track.applyConstraints({ advanced: [{ torch: true }] });
-          status.textContent = "Lampe allumée (si supportée).";
-          btnStart.disabled = true;
-          btnStop.disabled = false;
-        } else {
-          status.textContent = "Torch non supportée sur ce navigateur/appareil.";
-        }
-      } catch (err) {
-        status.textContent = "Erreur : " + (err.message || err);
+    function checkReady() {
+      if (fileOk && cameraOk) {
+        document.getElementById("spin").disabled = false;
       }
     }
 
-    async function stopTorch() {
-      try {
-        if (track) {
-          await track.applyConstraints({ advanced: [{ torch: false }] }).catch(()=>{});
-          track.stop();
-        }
-        if (stream) {
-          stream.getTracks().forEach(t => t.stop());
-        }
-        status.textContent = "Lampe éteinte.";
-      } catch (err) {
-        status.textContent = "Erreur arrêt: " + (err.message || err);
-      } finally {
-        btnStart.disabled = false;
-        btnStop.disabled = true;
-      }
-    }
+    // Fichier
+    document.getElementById("humanFile").addEventListener("change", () => {
+      fileOk = true;
+      checkReady();
+    });
 
-    btnStart.addEventListener("click", startTorch);
-    btnStop.addEventListener("click", stopTorch);
+    // Caméra
+    document.getElementById("startCamera").addEventListener("click", async () => {
+      try {
+        const camStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        document.getElementById("videoPreview").srcObject = camStream;
+        cameraOk = true;
+        checkReady();
+      } catch (err) {
+        alert("Caméra refusée : impossible de continuer la vérification.");
+      }
+    });
   </script>
 </body>
 </html>
