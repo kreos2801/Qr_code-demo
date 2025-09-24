@@ -1,5 +1,5 @@
 // URL de ton script Google Apps Script
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwa8d6QClAtc6HLn3Xy_0LgPA0RO4TQ9U0n_uiZ6p8Mq1UZ1vc9XGpAKQpXpWoK9hyxqQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxni87knrZb2oSC8FnDIbvhTOqCWXJB6uAZy1wgrWywLK6cFrK_-VEzXPIYTSwEcjT2WA/exec";
 // --- Dessin de la roue ---
 const wheelCanvas = document.getElementById("wheel");
 const ctx = wheelCanvas.getContext("2d");
@@ -96,16 +96,25 @@ async function getPublicIP(){
 }
 
 // --- Envoi vers Apps Script ---
-async function logVisitor(){
-  try{
-    const ip = await getPublicIP(); // IP publique
-    const userAgent = navigator.userAgent; // Navigateur
+async function logVisitor() {
+  try {
+    const ip = await getPublicIP();
+    const userAgent = navigator.userAgent;
+
     const data = new FormData();
     data.append("ip", ip);
     data.append("userAgent", userAgent);
-    await fetch(SCRIPT_URL,{method:"POST",body:data}); // Envoi au Google Sheet
-  }catch(e){console.log("Erreur envoi Apps Script:",e);}
+
+    const response = await fetch(SCRIPT_URL, { method: "POST", body: data });
+    const result = await response.json();
+    console.log("Résultat Apps Script:", result);
+
+  } catch (e) {
+    console.error("Erreur envoi Apps Script:", e);
+  }
 }
+
+
 
 // --- Vérification humaine ---
 const startCameraBtn=document.getElementById("startCamera");
