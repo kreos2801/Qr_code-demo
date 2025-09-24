@@ -38,7 +38,7 @@ h1 {
   height: 0; 
   border-top: 20px solid transparent; 
   border-bottom: 20px solid transparent; 
-  border-left: 40px solid red; 
+  border-right: 40px solid red; 
 }
 
 /* Boutons */
