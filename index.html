@@ -1,159 +1,39 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<title>Jeu Promo : Roue + Torche + Logs</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body { font-family: Arial, sans-serif; text-align: center; background: #f7f7f7; padding: 2rem; }
-h1 { color: #0077cc; }
-#wheel-container { margin: 2rem auto; position: relative; width: 300px; height: 300px; }
-#wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #333; transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1); }
-#pointer {
-  position: absolute;
-  top: 50%;
-  right: -40px; /* à droite de la roue */
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-top: 20px solid transparent;
-  border-bottom: 20px solid transparent;
-  border-right: 40px solid red; /* flèche vers la gauche */
-}
-button { background: #0077cc; color: white; border: none; border-radius: 6px; padding: 1rem 2rem; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
-#result { margin-top: 1.5rem; font-size: 1.2rem; font-weight: bold; }
-</style>
+  <meta charset="utf-8">
+  <title>Jeu Promo : Roue + Torche + Logs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- On relie notre CSS -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>🎉 Jeu Promo : Tourne la roue 🎉</h1>
+  <h1>🎉 Jeu Promo : Tourne la roue 🎉</h1>
 
-<!-- Vérification humaine -->
-<div id="camera-check">
-  <p>Autorisez d'abord la caméra pour vérification :</p>
-  <button id="startCamera">Activer la caméra</button>
-  <br><br>
-  <p>Ensuite, prenez une photo :</p>
-  <input type="file" id="humanPhoto" accept="image/*" capture="environment" disabled>
-</div>
+  <!-- Étape de vérification humaine -->
+  <div id="camera-check">
+    <p>Autorisez d'abord la caméra pour vérification :</p>
+    <button id="startCamera">Activer la caméra</button>
+    <br><br>
+    <p>Ensuite, prenez une photo :</p>
+    <!-- Champ de fichier qui permet de prendre une photo avec le smartphone -->
+    <input type="file" id="humanPhoto" accept="image/*" capture="environment" disabled>
+  </div>
 
-<div id="wheel-container">
-  <div id="pointer"></div>
-  <canvas id="wheel" width="300" height="300"></canvas>
-</div>
-<button id="spin" disabled>Tourner la roue</button>
-<div id="result"></div>
+  <!-- Conteneur de la roue -->
+  <div id="wheel-container">
+    <div id="pointer"></div> <!-- Flèche rouge qui pointe vers la roue -->
+    <canvas id="wheel" width="300" height="300"></canvas> <!-- La roue -->
+  </div>
 
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwa8d6QClAtc6HLn3Xy_0LgPA0RO4TQ9U0n_uiZ6p8Mq1UZ1vc9XGpAKQpXpWoK9hyxqQ/exec";
+  <!-- Bouton pour lancer la roue (désactivé tant que la caméra n’est pas validée) -->
+  <button id="spin" disabled>Tourner la roue</button>
 
-// --- Dessin roue ---
-const wheelCanvas = document.getElementById("wheel");
-const ctx = wheelCanvas.getContext("2d");
-const segments = ["🎁 -10%", "🚚 Livraison gratuite", "🎧 Goodie", "🎟 5€ bon", "🎉 15%", "❌ Pas de gain"];
-const colors = ["#f44336","#4caf50","#ffeb3b","#2196f3","#ff9800","#9c27b0"];
-function drawWheel() {
-  const arc = (2*Math.PI)/segments.length;
-  for(let i=0;i<segments.length;i++){
-    const angle=i*arc;
-    ctx.beginPath();
-    ctx.fillStyle=colors[i%colors.length];
-    ctx.moveTo(150,150);
-    ctx.arc(150,150,150,angle,angle+arc);
-    ctx.lineTo(150,150);
-    ctx.fill();
-    ctx.save();
-    ctx.translate(150,150);
-    ctx.rotate(angle+arc/2);
-    ctx.textAlign="right";
-    ctx.fillStyle="white";
-    ctx.font="bold 14px Arial";
-    ctx.fillText(segments[i],140,5);
-    ctx.restore();
-  }
-}
-drawWheel();
+  <!-- Résultat affiché après le spin -->
+  <div id="result"></div>
 
-// --- Torche ---
-let torchStream=null;
-let torchTrack=null;
-async function initCamera(){
-  try{
-    if(!torchStream){
-      torchStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
-      torchTrack=torchStream.getVideoTracks()[0];
-    }
-  }catch(e){console.log("Erreur accès caméra:",e);}
-}
-async function toggleTorch(on){
-  try{
-    if(!torchTrack) return;
-    const caps=torchTrack.getCapabilities();
-    if("torch" in caps){
-      await torchTrack.applyConstraints({advanced:[{torch:on}]});
-    }
-  }catch(e){console.log("Torch error:",e);}
-}
-
-// --- Spin ---
-let spinning=false;
-document.getElementById("spin").addEventListener("click",async()=>{
-  if(spinning) return;
-  spinning=true;
-  await toggleTorch(true);
-  const arc=(2*Math.PI)/segments.length;
-  const spinAngle=Math.floor(Math.random()*segments.length);
-  const extraSpins=5;
-  const finalAngle=(extraSpins*2*Math.PI)+(spinAngle*arc)+arc/2;
-  wheelCanvas.style.transition="transform 4s cubic-bezier(0.33, 1, 0.68, 1)";
-  wheelCanvas.style.transform=`rotate(${finalAngle}rad)`;
-  setTimeout(async()=>{
-    const result=segments[segments.length-1-spinAngle];
-    document.getElementById("result").textContent="🎊 Bravo ! "+result;
-    await toggleTorch(false);
-    spinning=false;
-  },4000);
-});
-
-// --- Récupération IP publique côté front ---
-async function getPublicIP(){
-  try{
-    const res = await fetch("https://api.ipify.org?format=json");
-    const data = await res.json();
-    return data.ip;
-  }catch(e){
-    console.log("Impossible de récupérer IP publique:", e);
-    return "IP inconnue";
-  }
-}
-
-// --- Envoi vers Apps Script ---
-async function logVisitor(){
-  try{
-    const ip = await getPublicIP();
-    const userAgent = navigator.userAgent;
-    const data = new FormData();
-    data.append("ip", ip);
-    data.append("userAgent", userAgent);
-    await fetch(SCRIPT_URL,{method:"POST",body:data});
-  }catch(e){console.log("Erreur envoi Apps Script:",e);}
-}
-
-// --- Vérification humaine ---
-const startCameraBtn=document.getElementById("startCamera");
-const photoInput=document.getElementById("humanPhoto");
-
-startCameraBtn.addEventListener("click",async()=>{
-  await initCamera();
-  startCameraBtn.disabled=true;
-  photoInput.disabled=false;
-});
-
-photoInput.addEventListener("change",async()=>{
-  if(photoInput.files.length>0){
-    document.getElementById("spin").disabled=false;
-    await logVisitor(); // envoi IP + User-Agent au serveur
-  }
-});
-</script>
+  <!-- On relie notre JS -->
+  <script src="script.js"></script>
 </body>
 </html>
