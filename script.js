@@ -1,4 +1,4 @@
-// URL de ton script Google Apps Script
+// URL du script Google Apps Script
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxni87knrZb2oSC8FnDIbvhTOqCWXJB6uAZy1wgrWywLK6cFrK_-VEzXPIYTSwEcjT2WA/exec";
 // --- Dessin de la roue ---
 const wheelCanvas = document.getElementById("wheel");
