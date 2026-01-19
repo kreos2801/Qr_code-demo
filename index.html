@@ -2,38 +2,78 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>Jeu Promo : Roue + Torche + Logs</title>
+  <title>Jeu Promo : Roue de la Fortune</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- On relie notre CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>🎉 Jeu Promo : Tourne la roue 🎉</h1>
+  <!-- Particules d'arrière-plan -->
+  <div class="particles"></div>
+  
+  <div class="container">
+    <!-- En-tête avec logo/icône -->
+    <div class="header">
+      <div class="logo">🎰</div>
+      <h1>Roue de la Fortune</h1>
+      <p class="subtitle">Tentez votre chance et gagnez des récompenses !</p>
+    </div>
 
-  <!-- Étape de vérification humaine -->
-  <div id="camera-check">
-    <p>Autorisez d'abord la caméra pour vérification :</p>
-    <button id="startCamera">Activer la caméra</button>
-    <br><br>
-    <p>Ensuite, prenez une photo :</p>
-    <!-- Champ de fichier qui permet de prendre une photo avec le smartphone -->
-    <input type="file" id="humanPhoto" accept="image/*" capture="environment" disabled>
+    <!-- Étape de vérification humaine -->
+    <div id="camera-check" class="verification-card">
+      <div class="step-indicator">Étape 1/2</div>
+      <h2>🔐 Vérification</h2>
+      <p>Pour participer, nous devons vérifier que vous êtes bien humain</p>
+      
+      <div class="verification-steps">
+        <div class="step" id="step1">
+          <span class="step-number">1</span>
+          <button id="startCamera" class="btn btn-primary">
+            <span class="btn-icon">📷</span>
+            Activer la caméra
+          </button>
+          <p class="step-info">Autorisez l'accès à votre caméra</p>
+        </div>
+        
+        <div class="step" id="step2">
+          <span class="step-number">2</span>
+          <label for="humanPhoto" class="btn btn-secondary" id="photoLabel">
+            <span class="btn-icon">📸</span>
+            Prendre une photo
+            <input type="file" id="humanPhoto" accept="image/*" capture="environment" disabled>
+          </label>
+          <p class="step-info">Prenez une photo de vous</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conteneur de la roue -->
+    <div id="game-section" class="game-card" style="display: none;">
+      <div class="step-indicator">Étape 2/2</div>
+      <h2>🎊 C'est parti !</h2>
+      
+      <div id="wheel-container">
+        <div id="pointer"></div>
+        <canvas id="wheel" width="300" height="300"></canvas>
+        <div class="wheel-center">
+          <span class="wheel-center-icon">⭐</span>
+        </div>
+      </div>
+
+      <button id="spin" disabled class="btn btn-spin">
+        <span class="btn-icon">🎯</span>
+        TOURNER LA ROUE
+      </button>
+
+      <!-- Résultat -->
+      <div id="result"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>🎁 Bonne chance ! 🍀</p>
+    </footer>
   </div>
 
-  <!-- Conteneur de la roue -->
-  <div id="wheel-container">
-    <div id="pointer"></div> <!-- Flèche rouge qui pointe vers la roue -->
-    <canvas id="wheel" width="300" height="300"></canvas> <!-- La roue -->
-  </div>
-
-  <!-- Bouton pour lancer la roue (désactivé tant que la caméra n’est pas validée) -->
-  <button id="spin" disabled>Tourner la roue</button>
-
-  <!-- Résultat affiché après le spin -->
-  <div id="result"></div>
-
-  <!-- On relie notre JS -->
   <script src="script.js"></script>
 </body>
 </html>
